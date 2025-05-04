@@ -1,38 +1,191 @@
 {
-  "data": [
-    {
-      "id": "vauarN0D9blTvM7OBcZgO",
-      "name": "Save Typeform Submissions to Google Sheets",
-      "description": "If you want your Typeform submissions to be saved to a google sheet, this one is for you.\n\nThis template will help you do just that in addition to using OpenAI to describe the submission and send an email containing that description.",
-      "pieces": [
-        "@activepieces/piece-typeform",
-        "@activepieces/piece-google-sheets",
-        "@activepieces/piece-json",
-        "@activepieces/piece-openai",
-        "@activepieces/piece-gmail"
-      ],
-      "tags": ["Productivity"]
+  "id": "UQkvmtMmenchFlLTibjIO",
+  "created": "2024-04-28T11:00:06.394Z",
+  "updated": "2024-04-28T11:00:06.394Z",
+  "name": "Telegram - Airtable Order Tracking Bot",
+  "description": "This Telegram bot offers a streamlined experience for users seeking to connect with a business and access their contact information efficiently.\n\nFeatures:\nWhen a user input \"contact\", the bot promptly responds with a message providing the business contact info.\n\nFor queries other than \"contact\" the bot connects to the Airtable database to perform a search. If a matching entry is found, the bot displays the information on Telegram, providing users with the desired result.\n\nIf the user sends something other than \"contact\" the bot expects the message to be an order ID, which the bot looks up in an Airtable database, responding to the user with the order info it found.\n\nHowever, if no order is found, the bot sends a message stating \"Nothing found\", ensuring the user is promptly informed of the search outcome.\n\nThe Airtable database has these fields:\n\n1.Name\n2.Notes\n3.Status\n4.OrderID\n\nCreated by: [G_M](https://community.activepieces.com/u/g_m/summary)\n",
+  "type": "PLATFORM",
+  "platformId": "NgixMLyPUxy1ZgCcxw5cM",
+  "projectId": null,
+  "template": {
+    "valid": true,
+    "trigger": {
+      "name": "trigger",
+      "type": "PIECE_TRIGGER",
+      "valid": true,
+      "settings": {
+        "input": {},
+        "pieceName": "@activepieces/piece-telegram-bot",
+        "pieceType": "OFFICIAL",
+        "inputUiInfo": {},
+        "packageType": "REGISTRY",
+        "triggerName": "new_telegram_message",
+        "pieceVersion": "~0.3.13"
+      },
+      "nextAction": {
+        "name": "step_1",
+        "type": "BRANCH",
+        "valid": true,
+        "settings": {
+          "conditions": [
+            [
+              {
+                "operator": "TEXT_CONTAINS",
+                "firstValue": "{{trigger}}{{trigger['message']['text']}}",
+                "secondValue": "contact",
+                "caseSensitive": false
+              }
+            ]
+          ],
+          "inputUiInfo": {}
+        },
+        "displayName": "Is Asking for Contact Info?",
+        "onFailureAction": {
+          "name": "step_4",
+          "type": "PIECE",
+          "valid": true,
+          "settings": {
+            "input": {
+              "base": "app3EsPM7ohWMQy3P",
+              "tableId": "tblf57X4m8oMSYMUB",
+              "searchField": "OrderID",
+              "searchValue": "{{trigger['message']['text']}}"
+            },
+            "pieceName": "@activepieces/piece-airtable",
+            "pieceType": "OFFICIAL",
+            "actionName": "airtable_find_record",
+            "inputUiInfo": {},
+            "packageType": "REGISTRY",
+            "pieceVersion": "~0.4.14",
+            "errorHandlingOptions": {
+              "retryOnFailure": {
+                "value": false
+              },
+              "continueOnFailure": {
+                "value": false
+              }
+            }
+          },
+          "nextAction": {
+            "name": "step_5",
+            "type": "BRANCH",
+            "valid": true,
+            "settings": {
+              "conditions": [
+                [
+                  {
+                    "operator": "TEXT_EXACTLY_MATCHES",
+                    "firstValue": "{{trigger['message']['text']}}",
+                    "secondValue": "{{step_4[0]['fields']['OrderID']}}",
+                    "caseSensitive": false
+                  }
+                ]
+              ],
+              "inputUiInfo": {}
+            },
+            "displayName": "Does Order Exist?",
+            "onFailureAction": {
+              "name": "step_6",
+              "type": "PIECE",
+              "valid": true,
+              "settings": {
+                "input": {
+                  "media": {
+                    "animationUrl": "https://c.tenor.com/lx2WSGRk8bcAAAAC/tenor.gif"
+                  },
+                  "format": "MarkdownV2",
+                  "chat_id": "{{trigger['message']['chat']['id']}}",
+                  "message": "Nothing found :\\(",
+                  "media_type": "animation"
+                },
+                "pieceName": "@activepieces/piece-telegram-bot",
+                "pieceType": "OFFICIAL",
+                "actionName": "send_media",
+                "inputUiInfo": {},
+                "packageType": "REGISTRY",
+                "pieceVersion": "~0.3.13",
+                "errorHandlingOptions": {
+                  "retryOnFailure": {
+                    "value": false
+                  },
+                  "continueOnFailure": {
+                    "value": false
+                  }
+                }
+              },
+              "displayName": "Order Not Found"
+            },
+            "onSuccessAction": {
+              "name": "step_2",
+              "type": "PIECE",
+              "valid": true,
+              "settings": {
+                "input": {
+                  "media": {
+                    "photoUrl": "https://images.unsplash.com/photo-1503876466-1fc5143eda57?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mjd8fG1lc3NhZ2V8ZW58MHwwfDB8fHwy"
+                  },
+                  "format": "MarkdownV2",
+                  "chat_id": "{{trigger['message']['chat']['id']}}",
+                  "message": "Order ID \\- {{step_4[0]['fields']['OrderID']}}\\nName \\- {{step_4[0]['fields']['Name']}}\\nNotes \\- {{step_4[0]['fields']['Notes']}}\\nStatus \\- {{step_4[0]['fields']['Status']}}\\n\\nThat's All\\.",
+                  "media_type": "photo"
+                },
+                "pieceName": "@activepieces/piece-telegram-bot",
+                "pieceType": "OFFICIAL",
+                "actionName": "send_media",
+                "inputUiInfo": {},
+                "packageType": "REGISTRY",
+                "pieceVersion": "~0.3.13",
+                "errorHandlingOptions": {
+                  "retryOnFailure": {
+                    "value": false
+                  },
+                  "continueOnFailure": {
+                    "value": false
+                  }
+                }
+              },
+              "displayName": "Send Order Info"
+            }
+          },
+          "displayName": "Find Order Record"
+        },
+        "onSuccessAction": {
+          "name": "step_3",
+          "type": "PIECE",
+          "valid": true,
+          "settings": {
+            "input": {
+              "format": "MarkdownV2",
+              "chat_id": "{{trigger['message']['chat']['id']}}",
+              "message": "📢 Need to get in touch with Anonymous Contact\\? Here's how you can reach us:\\n1\\. 📱 Telegram: @AnonymousContact2982\\n2\\. 📱 WhatsApp: \\+910000000000\\n3\\. 🐦 Twitter: Twitter\\.com/anonymouscontact \\n4\\. 📘 Facebook: Facebook\\.com/anonymouscontact\\n5\\. 📸 Instagram: Instagram\\.com/anonymouscontact \\n6\\. 📌 Pinterest: Pinterest\\.com/anonymouscontact\\n📧 Email:\\nsupport@Anonymouscontact\\.biz\\ninfo@Anonymouscontact\\.com\\n💻 Website: www\\.AnonymousContact\\.biz \\n📝 Contact Form: www\\.AnonymousContact\\.biz/Contact\\-Us \\nWe're here to assist you with all your needs\\!"
+            },
+            "pieceName": "@activepieces/piece-telegram-bot",
+            "pieceType": "OFFICIAL",
+            "actionName": "send_text_message",
+            "inputUiInfo": {},
+            "packageType": "REGISTRY",
+            "pieceVersion": "~0.3.13",
+            "errorHandlingOptions": {
+              "retryOnFailure": {
+                "value": false
+              },
+              "continueOnFailure": {
+                "value": false
+              }
+            }
+          },
+          "displayName": "Send Your Contact Info"
+        }
+      },
+      "displayName": "New Message"
     },
-    {
-      "id": "KPZPDYTMWJRLTlSsvqKZT",
-      "name": "Send ChatGPT welcome email to MailChimp new subscribers",
-      "description": "This flow monitors new subscribers to a MailChimp audience, sends their information to ChatGPT with some context and a personalisation request, and asks it to generate a welcome email to that user, then sends the email to the user with SendGrid.",
-      "pieces": [
-        "@activepieces/piece-mailchimp",
-        "@activepieces/piece-openai",
-        "@activepieces/piece-sendgrid"
-      ],
-      "tags": [""]
-    },
-    {
-      "id": "UQkvmtMmenchFlLTibjIO",
-      "name": "Telegram - Airtable Order Tracking Bot",
-      "description": "This Telegram bot offers a streamlined experience for users seeking to connect with a business and access their contact information efficiently.\n\nFeatures:\nWhen a user input \"contact\", the bot promptly responds with a message providing the business contact info.\n\nFor queries other than \"contact\" the bot connects to the Airtable database to perform a search. If a matching entry is found, the bot displays the information on Telegram, providing users with the desired result.\n\nIf the user sends something other than \"contact\" the bot expects the message to be an order ID, which the bot looks up in an Airtable database, responding to the user with the order info it found.",
-      "pieces": [
-        "@activepieces/piece-telegram-bot",
-        "@activepieces/piece-airtable"
-      ],
-      "tags": ["Notifications", "ECommerce"]
-    }
-  ]
+    "displayName": "Telegram - Airtable Order Tracking Bot"
+  },
+  "tags": ["Notifications ", "ECommerce "],
+  "pieces": [
+    "@activepieces/piece-telegram-bot",
+    "@activepieces/piece-airtable"
+  ],
+  "blogUrl": "",
+  "metadata": null
 }
