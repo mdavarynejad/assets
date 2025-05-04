@@ -1,0 +1,38 @@
+{
+  "data": [
+    {
+      "id": "vauarN0D9blTvM7OBcZgO",
+      "name": "Save Typeform Submissions to Google Sheets",
+      "description": "If you want your Typeform submissions to be saved to a google sheet, this one is for you.\n\nThis template will help you do just that in addition to using OpenAI to describe the submission and send an email containing that description.",
+      "pieces": [
+        "@activepieces/piece-typeform",
+        "@activepieces/piece-google-sheets",
+        "@activepieces/piece-json",
+        "@activepieces/piece-openai",
+        "@activepieces/piece-gmail"
+      ],
+      "tags": ["Productivity"]
+    },
+    {
+      "id": "KPZPDYTMWJRLTlSsvqKZT",
+      "name": "Send ChatGPT welcome email to MailChimp new subscribers",
+      "description": "This flow monitors new subscribers to a MailChimp audience, sends their information to ChatGPT with some context and a personalisation request, and asks it to generate a welcome email to that user, then sends the email to the user with SendGrid.",
+      "pieces": [
+        "@activepieces/piece-mailchimp",
+        "@activepieces/piece-openai",
+        "@activepieces/piece-sendgrid"
+      ],
+      "tags": [""]
+    },
+    {
+      "id": "UQkvmtMmenchFlLTibjIO",
+      "name": "Telegram - Airtable Order Tracking Bot",
+      "description": "This Telegram bot offers a streamlined experience for users seeking to connect with a business and access their contact information efficiently.\n\nFeatures:\nWhen a user input \"contact\", the bot promptly responds with a message providing the business contact info.\n\nFor queries other than \"contact\" the bot connects to the Airtable database to perform a search. If a matching entry is found, the bot displays the information on Telegram, providing users with the desired result.\n\nIf the user sends something other than \"contact\" the bot expects the message to be an order ID, which the bot looks up in an Airtable database, responding to the user with the order info it found.",
+      "pieces": [
+        "@activepieces/piece-telegram-bot",
+        "@activepieces/piece-airtable"
+      ],
+      "tags": ["Notifications", "ECommerce"]
+    }
+  ]
+}
