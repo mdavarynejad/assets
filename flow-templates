@@ -108,6 +108,537 @@
       ],
       "blogUrl": "",
       "metadata": null
+    },
+    {
+      "id": "EU1n3pj5kHlQtY0sR7mXz",
+      "created": "2024-05-04T10:24:40.915Z",
+      "updated": "2024-05-04T10:24:40.915Z",
+      "name": "EU_tenders_with_logic_starting_from_last_ND",
+      "description": "A sophisticated automation that monitors EU tenders, specifically from Belgium, Netherlands, Ireland, and Malta. It intelligently tracks the last processed notice document number, fetches new notices, parses XML data, and uses Google Gemini to analyze relevance. Relevant tenders are automatically added to Google Sheets for further review.",
+      "type": "PLATFORM",
+      "platformId": "NgixMLyPUxy1ZgCcxw5cM",
+      "projectId": null,
+      "template": {
+        "displayName": "EU_tenders_with_logic_starting_from_last_ND",
+        "trigger": {
+          "name": "trigger",
+          "valid": true,
+          "displayName": "Cron Expression",
+          "type": "PIECE_TRIGGER",
+          "settings": {
+            "pieceName": "@activepieces/piece-schedule",
+            "pieceVersion": "0.1.5",
+            "pieceType": "OFFICIAL",
+            "packageType": "REGISTRY",
+            "input": {
+              "cronExpression": "*/30 9-17 * * 1-5",
+              "timezone": "Europe/Amsterdam"
+            },
+            "inputUiInfo": {
+              "customizedInputs": {}
+            },
+            "triggerName": "cron_expression"
+          },
+          "nextAction": {
+            "displayName": "Get",
+            "name": "step_11",
+            "valid": true,
+            "skip": false,
+            "settings": {
+              "pieceName": "@activepieces/piece-store",
+              "pieceType": "OFFICIAL",
+              "packageType": "REGISTRY",
+              "actionName": "get",
+              "pieceVersion": "0.5.4",
+              "input": {
+                "key": "last_ND",
+                "defaultValue": "266377-2025",
+                "store_scope": "COLLECTION"
+              },
+              "errorHandlingOptions": {
+                "continueOnFailure": {
+                  "value": false
+                },
+                "retryOnFailure": {
+                  "value": false
+                }
+              },
+              "inputUiInfo": {
+                "customizedInputs": {}
+              }
+            },
+            "type": "PIECE",
+            "nextAction": {
+              "displayName": "Prepare initial inquiry to TED API",
+              "name": "step_1",
+              "valid": true,
+              "skip": false,
+              "settings": {
+                "sourceCode": {
+                  "code": "export const code = async (inputs) => {\n  // --- Get the last processed Notice Number from the input ---\n  // Default to '0-0' if the storage was empty or step_11 failed somehow\n  // Assumes the input variable to this code step is named 'lastNoticeNumber'\n  const lastProcessedNd = inputs.lastNoticeNumber || '0-0';\n  console.log(`Querying for notices after ND: ${lastProcessedNd}`);\n\n  // --- Define the query based on Notice Number (ND) AND Country (CY) ---\n  // Combine ND filter with the requested country list using AND\n  const expertQuery = `ND = (> ${lastProcessedNd}) AND CY IN (BEL NLD IRL MLT)`; // <-- Added country filter here\n  console.log(`Expert Query: ${expertQuery}`); // Log the full query\n\n  // --- Define desired fields (ensure ND is included) ---\n  // Include fields needed by subsequent steps (like 'links' for step_3/step_5)\n  const fieldsToReturn = [\n    \"ND\", // Notice Document number\n    \"PD\", // Publication Date\n    \"TI\", // Title\n    \"CY\", // Country\n    \"AU\", // Authority Name\n    \"links\" // Include links object for later steps\n  ];\n\n  // --- Define pagination & scope ---\n  const pageNum = 1; // Get the first page of results\n  const resultsLimit = 50; // Process 50 notices per run\n  const scope = 2; // Scope 2 = ALL notices\n\n  // --- Construct the Request Body JSON Object ---\n  const requestBody = {\n    query: expertQuery,\n    fields: fieldsToReturn,\n    page: pageNum,\n    limit: resultsLimit,\n    scope: scope\n  };\n\n  // --- Convert object to JSON string for the HTTP step ---\n  const jsonString = JSON.stringify(requestBody);\n  console.log(\"Query JSON String:\", jsonString);\n\n  // Return the JSON string. The next HTTP step (step_2) should use this.\n  // Ensure the key matches what step_2 expects (e.g., 'requestBodyString')\n  return {\n    requestBodyString: jsonString\n  };\n};",
+                  "packageJson": "{}"
+                },
+                "input": {
+                  "lastNoticeNumber": "{{step_11}}"
+                },
+                "inputUiInfo": {
+                  "customizedInputs": {}
+                },
+                "errorHandlingOptions": {
+                  "continueOnFailure": {
+                    "value": false
+                  },
+                  "retryOnFailure": {
+                    "value": false
+                  }
+                }
+              },
+              "type": "CODE",
+              "nextAction": {
+                "displayName": "Retrieve records from TED",
+                "name": "step_2",
+                "valid": true,
+                "skip": false,
+                "settings": {
+                  "pieceName": "@activepieces/piece-http",
+                  "pieceType": "OFFICIAL",
+                  "packageType": "REGISTRY",
+                  "actionName": "send_request",
+                  "pieceVersion": "0.6.2",
+                  "input": {
+                    "method": "POST",
+                    "url": "https://api.ted.europa.eu/v3/notices/search",
+                    "headers": {
+                      "Content-Type": "application/json",
+                      "Accept": "application/json"
+                    },
+                    "queryParams": {},
+                    "body_type": "raw",
+                    "body": {
+                      "data": "{{step_1['requestBodyString']}}"
+                    },
+                    "use_proxy": false,
+                    "proxy_settings": {},
+                    "failsafe": false
+                  },
+                  "errorHandlingOptions": {
+                    "continueOnFailure": {
+                      "value": false
+                    },
+                    "retryOnFailure": {
+                      "value": false
+                    }
+                  },
+                  "inputUiInfo": {
+                    "customizedInputs": {},
+                    "schema": {
+                      "body": {
+                        "data": {
+                          "displayName": "Raw Body",
+                          "required": true,
+                          "type": "LONG_TEXT"
+                        }
+                      },
+                      "proxy_settings": {}
+                    }
+                  }
+                },
+                "type": "PIECE",
+                "nextAction": {
+                  "displayName": "Process initially received notices",
+                  "name": "step_3",
+                  "valid": true,
+                  "skip": false,
+                  "type": "CODE",
+                  "settings": {
+                    "sourceCode": {
+                      "code": "export const code = async (inputs) => {\n  // This code assumes the full output from the previous HTTP step (Step 2)\n  // is mapped to an input variable named 'httpResponse' in this step's settings.\n  const httpResponseOutput = inputs.httpResponse;\n\n  // Safely access the 'body' object from the HTTP response\n  const responseBody = httpResponseOutput?.body;\n\n  // Safely access the 'notices' array within the body.\n  // If 'notices' doesn't exist or body is null, default to an empty array.\n  const notices = responseBody?.notices || [];\n\n  console.log(`Received ${notices.length} notices from API.`);\n\n  // Use .map() to transform each notice object into a simpler object\n  const processedNotices = notices.map(notice => {\n    // Determine the primary country code (e.g., \"NLD\")\n    const countryCode = notice?.CY?.[0] ?? null;\n    // Get lowercase version for accessing language-specific fields (e.g., \"nld\")\n    const countryCodeLower = countryCode?.toLowerCase() ?? null;\n\n    // Extract desired fields safely using optional chaining (?.)\n    // and nullish coalescing (??) to provide null if data is missing.\n    return {\n      noticeId: notice?.ND ?? null,\n      publicationDate: notice?.PD ?? null,\n      // Prioritize English title, fallback to Dutch, then first available title\n      title: notice?.TI?.eng ?? notice?.TI?.nld ?? Object.values(notice?.TI ?? {})[0] ?? null,\n      // Try to get authority matching the country code (e.g., notice.AU.nld[0]), fallback to null\n      authority: notice?.AU?.[countryCodeLower]?.[0] ?? null,\n      country: countryCode,\n      // Prioritize English HTML link, fallback to first available HTML link\n      link: notice?.links?.html?.ENG ?? Object.values(notice?.links?.html ?? {})[0] ?? null\n    };\n  });\n\n  console.log(`Processed ${processedNotices.length} notices into cleaner format.`);\n\n  // Return the array of processed notices.\n  // The key name 'noticeList' can be used in subsequent steps (like a Loop).\n  return {\n    noticeList: processedNotices\n  };\n};",
+                      "packageJson": "{}"
+                    },
+                    "input": {
+                      "httpResponse": "{{step_2}}"
+                    },
+                    "inputUiInfo": {
+                      "customizedInputs": {}
+                    },
+                    "errorHandlingOptions": {
+                      "continueOnFailure": {
+                        "value": false
+                      },
+                      "retryOnFailure": {
+                        "value": false
+                      }
+                    }
+                  },
+                  "nextAction": {
+                    "displayName": "Iterate over notices",
+                    "name": "step_4",
+                    "valid": true,
+                    "skip": false,
+                    "type": "LOOP_ON_ITEMS",
+                    "settings": {
+                      "items": "{{step_3['noticeList']}}",
+                      "inputUiInfo": {
+                        "customizedInputs": {}
+                      }
+                    },
+                    "nextAction": {
+                      "displayName": "Find maximum notice nr",
+                      "name": "step_12",
+                      "valid": true,
+                      "skip": false,
+                      "type": "CODE",
+                      "settings": {
+                        "sourceCode": {
+                          "code": "// Helper function to parse ND string 'number-year' into a comparable value\nconst parseNoticeNumber = (ndString) => {\n  if (!ndString || typeof ndString !== 'string') return 0;\n  const parts = ndString.split('-');\n  if (parts.length !== 2) return 0;\n  const year = parseInt(parts[1], 10);\n  const number = parseInt(parts[0], 10);\n  if (isNaN(year) || isNaN(number)) return 0;\n  // Combine into a single number for comparison (e.g., 2025 * 1M + 123456)\n  // Adjust multiplier if notice numbers can exceed 999999\n  return year * 1000000 + number;\n};\n\nexport const code = async (inputs) => {\n  const notices = inputs.noticeList || [];\n  let latestNd = inputs.currentLastNd || '0-0'; // Start with the ND we began the run with\n  let maxNdValue = parseNoticeNumber(latestNd);\n\n  if (notices.length === 0) {\n    console.log(\"No new notices processed, keeping the last ND:\", latestNd);\n    return { latestNoticeNumber: latestNd };\n  }\n\n  for (const notice of notices) {\n    if (notice.noticeId) {\n      const currentNdValue = parseNoticeNumber(notice.noticeId);\n      if (currentNdValue > maxNdValue) {\n        maxNdValue = currentNdValue;\n        latestNd = notice.noticeId;\n      }\n    }\n  }\n\n  console.log(`Highest ND found in this batch: ${latestNd}`);\n  return {\n    latestNoticeNumber: latestNd\n  };\n};",
+                          "packageJson": "{}"
+                        },
+                        "input": {
+                          "noticeList": "{{step_3['noticeList']}}",
+                          "currentLastNd": "{{step_11}}"
+                        },
+                        "inputUiInfo": {
+                          "customizedInputs": {}
+                        },
+                        "errorHandlingOptions": {
+                          "continueOnFailure": {
+                            "value": false
+                          },
+                          "retryOnFailure": {
+                            "value": false
+                          }
+                        }
+                      },
+                      "nextAction": {
+                        "displayName": "Put",
+                        "name": "step_13",
+                        "valid": true,
+                        "skip": false,
+                        "type": "PIECE",
+                        "settings": {
+                          "pieceName": "@activepieces/piece-store",
+                          "pieceType": "OFFICIAL",
+                          "packageType": "REGISTRY",
+                          "actionName": "put",
+                          "pieceVersion": "0.5.4",
+                          "input": {
+                            "key": "last_ND",
+                            "value": "{{step_12['latestNoticeNumber']}}",
+                            "store_scope": "COLLECTION"
+                          },
+                          "errorHandlingOptions": {
+                            "continueOnFailure": {
+                              "value": false
+                            },
+                            "retryOnFailure": {
+                              "value": false
+                            }
+                          },
+                          "inputUiInfo": {
+                            "customizedInputs": {}
+                          }
+                        }
+                      }
+                    },
+                    "firstLoopAction": {
+                      "displayName": "Obtain XML files",
+                      "name": "step_5",
+                      "valid": true,
+                      "skip": false,
+                      "type": "PIECE",
+                      "settings": {
+                        "pieceName": "@activepieces/piece-http",
+                        "pieceType": "OFFICIAL",
+                        "packageType": "REGISTRY",
+                        "actionName": "send_request",
+                        "pieceVersion": "0.6.2",
+                        "input": {
+                          "method": "GET",
+                          "url": "https://ted.europa.eu/en/notice/{{step_4['item']['noticeId']}}/xml",
+                          "headers": {
+                            "Accept": "application/xml"
+                          },
+                          "queryParams": {},
+                          "body_type": "none",
+                          "body": {},
+                          "use_proxy": false,
+                          "proxy_settings": {},
+                          "failsafe": false
+                        },
+                        "errorHandlingOptions": {
+                          "continueOnFailure": {
+                            "value": false
+                          },
+                          "retryOnFailure": {
+                            "value": false
+                          }
+                        },
+                        "inputUiInfo": {
+                          "customizedInputs": {},
+                          "schema": {
+                            "proxy_settings": {},
+                            "body": {}
+                          }
+                        }
+                      },
+                      "nextAction": {
+                        "displayName": "Parse XML file",
+                        "name": "step_6",
+                        "valid": true,
+                        "skip": false,
+                        "type": "CODE",
+                        "settings": {
+                          "sourceCode": {
+                            "code": "// Code for Step 6: Parse XML and Extract Details (REVISED)\n\nexport const code = async (inputs) => {\n  // Expects raw XML text in inputs.xmlString\n  const xmlString = inputs.xmlString;\n\n  // Default values\n  let description = null;\n  let procedureType = null; // e.g., open, restricted\n  let noticeType = null; // e.g., cfc-standard, pin-standard, can-standard\n  let submissionDeadline = null;\n  let parsedXml = null;\n\n  try {\n    const xml2js = require('xml2js');\n    const parser = new xml2js.Parser({\n      explicitArray: false,\n      ignoreAttrs: true,\n      trim: true,\n      tagNameProcessors: [xml2js.processors.stripPrefix] // Strip namespaces\n    });\n\n    parsedXml = await parser.parseStringPromise(xmlString);\n    // console.log(\"--- Parsed XML Structure ---:\", JSON.stringify(parsedXml, null, 2)); // Uncomment to debug paths\n\n    // --- Extract Description --- (Using paths identified previously)\n    description = parsedXml?.ContractAwardNotice?.ProcurementProject?.Description\n               ?? parsedXml?.ContractAwardNotice?.ProcurementProjectLot?.ProcurementProject?.Description\n               // Add paths for other notice types if needed (e.g., CallForTenders)\n               ?? parsedXml?.CallForTenders?.ProcurementProject?.Description\n               ?? parsedXml?.CallForTenders?.ProcurementProjectLot?.ProcurementProject?.Description\n               ?? null;\n    if (typeof description === 'string') description = description.trim();\n    else if (description) description = JSON.stringify(description);\n\n    // --- Extract Procedure Type --- (GUESSING PATHS - VERIFY WITH REAL XML)\n    procedureType = parsedXml?.ContractAwardNotice?.TenderingProcess?.ProcedureCode\n                 ?? parsedXml?.CallForTenders?.TenderingProcess?.ProcedureCode\n                 ?? null;\n    if (typeof procedureType === 'object') procedureType = procedureType?.text ?? JSON.stringify(procedureType); // Handle potential nested text\n\n    // --- Extract Notice Type --- (GUESSING PATHS - VERIFY WITH REAL XML)\n    noticeType = parsedXml?.ContractAwardNotice?.NoticeTypeCode\n              ?? parsedXml?.CallForTenders?.NoticeTypeCode\n              ?? null;\n     if (typeof noticeType === 'object') noticeType = noticeType?.text ?? JSON.stringify(noticeType);\n\n    // --- Extract Submission Deadline --- (GUESSING PATHS - VERIFY WITH REAL XML)\n    submissionDeadline = parsedXml?.ContractAwardNotice?.ProcurementProjectLot?.TenderingProcess?.TenderSubmissionDeadlinePeriod?.EndDate\n                      ?? parsedXml?.CallForTenders?.ProcurementProjectLot?.TenderingProcess?.TenderSubmissionDeadlinePeriod?.EndDate\n                      // Sometimes it might be ParticipationRequestReceptionPeriod\n                      ?? parsedXml?.ContractAwardNotice?.ProcurementProjectLot?.TenderingProcess?.ParticipationRequestReceptionPeriod?.EndDate\n                      ?? parsedXml?.CallForTenders?.ProcurementProjectLot?.TenderingProcess?.ParticipationRequestReceptionPeriod?.EndDate\n                      ?? null;\n\n\n  } catch (error) {\n    console.error(\"Error during XML parsing:\", error);\n    description = description ?? \"Error: Could not parse XML.\"; // Keep description if already found\n  }\n\n  console.log(\"Extracted Description:\", description ? String(description).substring(0,100)+'...' : null);\n  console.log(\"Extracted Procedure Type:\", procedureType);\n  console.log(\"Extracted Notice Type:\", noticeType);\n  console.log(\"Extracted Submission Deadline:\", submissionDeadline);\n\n  // Return all extracted fields\n  return {\n    description: description ?? null,\n    procedureType: procedureType ?? null,\n    noticeType: noticeType ?? null,\n    submissionDeadline: submissionDeadline ?? null,\n  };\n};",
+                            "packageJson": "{\n  \"dependencies\": {\n    \"xml2js\": \"0.6.2\"\n  }\n}"
+                          },
+                          "input": {
+                            "xmlString": "{{step_5['body']}}"
+                          },
+                          "inputUiInfo": {
+                            "customizedInputs": {}
+                          },
+                          "errorHandlingOptions": {
+                            "continueOnFailure": {
+                              "value": false
+                            },
+                            "retryOnFailure": {
+                              "value": false
+                            }
+                          }
+                        },
+                        "nextAction": {
+                          "displayName": "Ask Gemini to analyse notices",
+                          "name": "step_7",
+                          "valid": true,
+                          "skip": false,
+                          "type": "PIECE",
+                          "settings": {
+                            "pieceName": "@activepieces/piece-google-gemini",
+                            "pieceType": "OFFICIAL",
+                            "packageType": "REGISTRY",
+                            "actionName": "chat_gemini",
+                            "pieceVersion": "0.0.11",
+                            "input": {
+                              "model": "gemini-2.5-flash-preview-04-17",
+                              "prompt": "Analyze the following tender based on my company's profile and return a JSON object.\nMy Company Profile / Relevance Criteria:\n---\nMy company is a small business specializing in AI-based software, training (technological, management, leadership), SaaS, automation, and other related services. We aim to identify tenders that are either directly related to AI or can be completed more efficiently with the aid of AI. Examples of our interests are: AI tools and services, Data analysis and data science, technological, management, and leadership training, website design, setting up software systems such as CMS, EQMS, and other online systems for managing data, quality control, student information management systems, and learning management systems. We are only interested in tenders that appear to be open for competition or market consultations for future tenders.\n---\nTender Information:\nTitle: {{step_4['item']['title']}}\nDescription: {{step_6['description']}} // Description extracted from XML\nCountry: {{step_4['item']['country']}}\nAuthority: {{step_4['item']['authority']}}\nExtracted Procedure Type Code: {{step_6['procedureType']}}// Extracted from XML (e.g., open, restricted)\nExtracted Notice Type Code: {{step_6['noticeType']}} // Extracted from XML (e.g., cfc-standard, pin-standard)\nInstructions:\n1. Based ONLY on my Company Profile and the Tender Information, determine if the *subject matter* of this tender is relevant to my company's area of expertise (AI, specific software systems, training, data science etc.). Set 'is_relevant_domain' to true or false.\n2. Based ONLY on the Tender Information (especially title, description, procedure/notice type codes), determine if this tender appears to be an 'open competition' or a 'market consultation/PIN'. Set 'is_relevant_type' to true if it seems to be one of these, otherwise false.\n3. Generate a concise one-line summary of the tender's main objective. Set 'one_line_summary'.\n4. Extract the Submission Deadline from the Tender Information (use the value from 'Extracted Submission Deadline' if available and valid, otherwise try to find it in the text). Use YYYY-MM-DD format if possible, otherwise state as text. Set 'submission_deadline'.\n5. Extract any Information Deadline mentioned (less common, might be deadline for questions). Use YYYY-MM-DD format if possible, otherwise state as text. Set 'information_deadline'.\n6. Determine the likely tender type based on the information provided (e.g., \"Open Tender\", \"Market Consultation\", \"Restricted Tender\", \"Contract Award\", \"Unknown\"). Set 'extracted_type'.\n7. Respond ONLY with a single JSON object formatted EXACTLY like this, using null for fields that cannot be found:\n{\n  \"is_relevant_domain\": true_or_false,\n  \"is_relevant_type\": true_or_false,\n  \"one_line_summary\": \"Concise summary text...\",\n  \"submission_deadline\": \"YYYY-MM-DD or text or null\",\n  \"information_deadline\": \"YYYY-MM-DD or text or null\",\n  \"extracted_type\": \"Type description or null\"\n}\n",
+                              "auth": "{{connections['B7TsZXqSzfC99aMUNcNhm']}}"
+                            },
+                            "errorHandlingOptions": {
+                              "continueOnFailure": {
+                                "value": false
+                              },
+                              "retryOnFailure": {
+                                "value": false
+                              }
+                            },
+                            "inputUiInfo": {
+                              "customizedInputs": {}
+                            }
+                          },
+                          "nextAction": {
+                            "displayName": "Process Gemini's response",
+                            "name": "step_10",
+                            "valid": true,
+                            "skip": false,
+                            "type": "CODE",
+                            "settings": {
+                              "sourceCode": {
+                                "code": "export const code = async (inputs) => {\n  // Input 'geminiResponseString' contains the JSON string from Gemini\n\n  // Initialize with all potential fields defined, including 'error'\n  let parsedData = {\n    is_relevant_domain: false,\n    is_relevant_type: false,\n    one_line_summary: null,\n    submission_deadline: null,\n    information_deadline: null,\n    extracted_type: null,\n    error: null // Include error field, default to null\n  };\n\n  // Ensure input is treated as a string\n  const inputString = String(inputs.geminiResponseString ?? \"\");\n\n  try {\n    // Remove potential markdown backticks and whitespace\n    const cleanString = inputString\n      .replace(/^```json\\s*/, '') // Remove starting ```json\n      .replace(/```$/, '')       // Remove ending ```\n      .trim();\n\n    // Proceed only if cleanString is not empty\n    if (cleanString) {\n      const geminiResult = JSON.parse(cleanString);\n      // Overwrite defaults with actual results from Gemini using spread operator.\n      // This handles cases where Gemini might omit optional fields like deadlines.\n      // Crucially, we reset 'error' to null here if parsing succeeds.\n      parsedData = { ...parsedData, ...geminiResult, error: null };\n      console.log(\"Successfully parsed Gemini response:\", parsedData);\n    } else {\n       console.warn(\"Received empty or null string from Gemini step.\");\n       parsedData.error = \"Received empty response from Gemini\";\n    }\n\n  } catch (e) {\n    console.error(\"Failed to parse Gemini JSON string:\", inputString, e);\n    // Set the error message in the pre-defined error field\n    // is_relevant flags remain false from the initial declaration\n    parsedData.error = \"Failed to parse Gemini response\";\n  }\n\n  // Return the parsed object (or the default object with an error message)\n  // Subsequent steps access fields like {{step_X.is_relevant_domain}}\n  return parsedData;\n};",
+                                "packageJson": "{}"
+                              },
+                              "input": {
+                                "geminiResponseString": "{{step_7['response']}}"
+                              },
+                              "inputUiInfo": {
+                                "customizedInputs": {}
+                              },
+                              "errorHandlingOptions": {
+                                "continueOnFailure": {
+                                  "value": false
+                                },
+                                "retryOnFailure": {
+                                  "value": false
+                                }
+                              }
+                            },
+                            "nextAction": {
+                              "displayName": "Decide whether notice is relevant",
+                              "name": "step_8",
+                              "valid": true,
+                              "skip": false,
+                              "type": "ROUTER",
+                              "settings": {
+                                "executionType": "EXECUTE_FIRST_MATCH",
+                                "branches": [
+                                  {
+                                    "conditions": [
+                                      [
+                                        {
+                                          "operator": "TEXT_CONTAINS",
+                                          "firstValue": "{{step_10['is_relevant_domain']}}",
+                                          "secondValue": "true",
+                                          "caseSensitive": false
+                                        }
+                                      ]
+                                    ],
+                                    "branchType": "CONDITION",
+                                    "branchName": "Branch 1"
+                                  },
+                                  {
+                                    "branchType": "FALLBACK",
+                                    "branchName": "Otherwise"
+                                  }
+                                ],
+                                "inputUiInfo": {
+                                  "customizedInputs": {}
+                                }
+                              },
+                              "children": [
+                                {
+                                  "displayName": "Add notice to Google Sheets",
+                                  "name": "step_9",
+                                  "valid": true,
+                                  "skip": false,
+                                  "type": "PIECE",
+                                  "settings": {
+                                    "pieceName": "@activepieces/piece-google-sheets",
+                                    "pieceType": "OFFICIAL",
+                                    "packageType": "REGISTRY",
+                                    "actionName": "insert_row",
+                                    "pieceVersion": "0.12.2",
+                                    "input": {
+                                      "includeTeamDrives": false,
+                                      "spreadsheetId": "1YQTWAtckO8VxLLrnESuc-j2Aha1dv2oaKutprjtROkM",
+                                      "sheetId": 983961306,
+                                      "as_string": true,
+                                      "first_row_headers": true,
+                                      "values": {
+                                        "A": "{{step_4['item']['noticeId']}}",
+                                        "B": "{{step_4['item']['publicationDate']}}",
+                                        "C": "{{step_4['item']['title']}}",
+                                        "D": "{{step_6['description']}}",
+                                        "E": "{{step_6['procedureType']}}",
+                                        "F": "{{step_4['item']['country']}}",
+                                        "G": "{{step_4['item']['authority']}}",
+                                        "I": "{{step_6['submissionDeadline']}}",
+                                        "J": "{{step_4['item']['link']}}"
+                                      },
+                                      "auth": "{{connections['NgomroQrtRdUX7K9gIpEr']}}"
+                                    },
+                                    "errorHandlingOptions": {
+                                      "continueOnFailure": {
+                                        "value": false
+                                      },
+                                      "retryOnFailure": {
+                                        "value": false
+                                      }
+                                    },
+                                    "inputUiInfo": {
+                                      "customizedInputs": {},
+                                      "schema": {
+                                        "values": {
+                                          "A": {
+                                            "displayName": "Notice ID",
+                                            "description": "Notice ID",
+                                            "required": false,
+                                            "defaultValue": "",
+                                            "type": "SHORT_TEXT"
+                                          },
+                                          "B": {
+                                            "displayName": "Publication Date",
+                                            "description": "Publication Date",
+                                            "required": false,
+                                            "defaultValue": "",
+                                            "type": "SHORT_TEXT"
+                                          },
+                                          "C": {
+                                            "displayName": "Title",
+                                            "description": "Title",
+                                            "required": false,
+                                            "defaultValue": "",
+                                            "type": "SHORT_TEXT"
+                                          },
+                                          "D": {
+                                            "displayName": "One Line Summary",
+                                            "description": "One Line Summary",
+                                            "required": false,
+                                            "defaultValue": "",
+                                            "type": "SHORT_TEXT"
+                                          },
+                                          "E": {
+                                            "displayName": "Type",
+                                            "description": "Type",
+                                            "required": false,
+                                            "defaultValue": "",
+                                            "type": "SHORT_TEXT"
+                                          },
+                                          "F": {
+                                            "displayName": "Country",
+                                            "description": "Country",
+                                            "required": false,
+                                            "defaultValue": "",
+                                            "type": "SHORT_TEXT"
+                                          },
+                                          "G": {
+                                            "displayName": "Authority",
+                                            "description": "Authority",
+                                            "required": false,
+                                            "defaultValue": "",
+                                            "type": "SHORT_TEXT"
+                                          },
+                                          "H": {
+                                            "displayName": "Info Deadline",
+                                            "description": "Info Deadline",
+                                            "required": false,
+                                            "defaultValue": "",
+                                            "type": "SHORT_TEXT"
+                                          },
+                                          "I": {
+                                            "displayName": "Submission Deadline",
+                                            "description": "Submission Deadline",
+                                            "required": false,
+                                            "defaultValue": "",
+                                            "type": "SHORT_TEXT"
+                                          },
+                                          "J": {
+                                            "displayName": "URL",
+                                            "description": "URL",
+                                            "required": false,
+                                            "defaultValue": "",
+                                            "type": "SHORT_TEXT"
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                },
+                                null
+                              ]
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "valid": true,
+        "schemaVersion": "1"
+      },
+      "tags": ["EU Tenders", "Data Processing", "AI Integration"],
+      "pieces": [
+        "@activepieces/piece-schedule",
+        "@activepieces/piece-store",
+        "@activepieces/piece-http",
+        "@activepieces/piece-google-gemini",
+        "@activepieces/piece-google-sheets"
+      ],
+      "blogUrl": "",
+      "metadata": null
     }
   ]
 }
