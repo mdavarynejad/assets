@@ -1,104 +1,113 @@
 {
-  "created": "1746384888499",
-  "updated": "1746384888499",
-  "name": "Send ChatGPT welcome email to MailChimp new subscribers",
-  "description": "",
-  "tags": [],
-  "pieces": [
-    "@activepieces/piece-mailchimp",
-    "@activepieces/piece-openai",
-    "@activepieces/piece-sendgrid"
-  ],
-  "template": {
-    "displayName": "Send ChatGPT welcome email to MailChimp new subscribers",
-    "trigger": {
-      "name": "trigger",
-      "valid": false,
-      "displayName": "Member Subscribed to Audience",
-      "type": "PIECE_TRIGGER",
-      "settings": {
-        "pieceName": "@activepieces/piece-mailchimp",
-        "pieceVersion": "~0.2.1",
-        "pieceType": "OFFICIAL",
-        "packageType": "REGISTRY",
-        "input": {
-          "list_id": "2ae2f814cd"
-        },
-        "inputUiInfo": {},
-        "triggerName": "subscribe"
-      },
-      "nextAction": {
-        "name": "step_1",
-        "type": "PIECE",
+  "next": "bmV4dF91bmRlZmluZWQ=",
+  "previous": "cHJldl91bmRlZmluZWQ=",
+  "data": [
+    {
+      "id": "KPZPDYTMWJRLTlSsvqKZT",
+      "created": "2024-05-04T10:14:48.499Z",
+      "updated": "2024-05-04T10:14:48.499Z",
+      "name": "Send ChatGPT welcome email to MailChimp new subscribers",
+      "description": "This flow monitors new subscribers to a MailChimp audience, sends their information to ChatGPT with some context and a personalisation request, and asks it to generate a welcome email to that user, then sends the email to the user with SendGrid.",
+      "type": "PLATFORM",
+      "platformId": "NgixMLyPUxy1ZgCcxw5cM",
+      "projectId": null,
+      "template": {
         "valid": false,
-        "settings": {
-          "input": {
-            "roles": [
-              {
-                "role": "system",
-                "content": "You are a helpful assistant."
-              },
-              {
-                "role": "user",
-                "content": "Who won the world series in 2020?"
-              },
-              {
-                "role": "assistant",
-                "content": "The Los Angeles Dodgers won the World Series in 2020."
-              }
-            ],
-            "prompt": "Write a welcome email to this person:{{trigger}}\n\nStrictly return a JSON object that has two fields, \"subject\" and \"message\".\n\nPersonalize the message according to the person object above. Mention a unique historic event that happened on the same day of their registration in the past (only use accurate information for this).\n\nContext about our business (the senders of the email):\nWe are a group of readers, and the user has signed up for our weekly newsletter of book recommendation."
-          },
-          "pieceName": "@activepieces/piece-openai",
-          "pieceType": "OFFICIAL",
-          "actionName": "ask_chatgpt",
-          "inputUiInfo": {},
-          "packageType": "REGISTRY",
-          "pieceVersion": "~0.2.5"
-        },
-        "nextAction": {
-          "name": "step_3",
-          "type": "CODE",
+        "trigger": {
+          "name": "trigger",
+          "type": "PIECE_TRIGGER",
           "valid": false,
           "settings": {
             "input": {
-              "chatgpt": "{{step_1}}"
+              "list_id": "2ae2f814cd"
             },
-            "artifact": "UEsDBAoAAAAAAO4AJVcaCx9KUgAAAFIAAAAIAAAAaW5kZXgudHNleHBvcnQgY29uc3QgY29kZSA9IGFzeW5jIChpbnB1dHMpID0+IHsKICAgIHJldHVybiBKU09OLnBhcnNlKGlucHV0cy5jaGF0Z3B0KTsKfTsKUEsDBAoAAAAAAO4AJVcaUtEIHAAAABwAAAAMAAAAcGFja2FnZS5qc29uewogICJkZXBlbmRlbmNpZXMiOiB7CiAgfQp9ClBLAQIUAAoAAAAAAO4AJVcaCx9KUgAAAFIAAAAIAAAAAAAAAAAAAAAAAAAAAABpbmRleC50c1BLAQIUAAoAAAAAAO4AJVcaUtEIHAAAABwAAAAMAAAAAAAAAAAAAAAAAHgAAABwYWNrYWdlLmpzb25QSwUGAAAAAAIAAgBwAAAAvgAAAAAA",
-            "inputUiInfo": {}
+            "pieceName": "@activepieces/piece-mailchimp",
+            "pieceType": "OFFICIAL",
+            "inputUiInfo": {},
+            "packageType": "REGISTRY",
+            "triggerName": "subscribe",
+            "pieceVersion": "~0.2.1"
           },
           "nextAction": {
-            "name": "step_2",
+            "name": "step_1",
             "type": "PIECE",
             "valid": false,
             "settings": {
               "input": {
-                "to": [
-                  "{{trigger.data.email}}"
+                "roles": [
+                  {
+                    "role": "system",
+                    "content": "You are a helpful assistant."
+                  },
+                  {
+                    "role": "user",
+                    "content": "Who won the world series in 2020?"
+                  },
+                  {
+                    "role": "assistant",
+                    "content": "The Los Angeles Dodgers won the World Series in 2020."
+                  }
                 ],
-                "from": "no-reply@example.com",
-                "content": "{{step_3.message}}",
-                "subject": "{{step_3.subject}}",
-                "from_name": "Our Business",
-                "content_type": "text"
+                "prompt": "Write a welcome email to this person:{{trigger}}\n\nStrictly return a JSON object that has two fields, \"subject\" and \"message\".\n\nPersonalize the message according to the person object above. Mention a unique historic event that happened on the same day of their registration in the past (only use accurate information for this).\n\nContext about our business (the senders of the email):\nWe are a group of readers, and the user has signed up for our weekly newsletter of book recommendation."
               },
-              "pieceName": "@activepieces/piece-sendgrid",
+              "pieceName": "@activepieces/piece-openai",
               "pieceType": "OFFICIAL",
-              "actionName": "send_email",
+              "actionName": "ask_chatgpt",
               "inputUiInfo": {},
               "packageType": "REGISTRY",
-              "pieceVersion": "~0.2.3"
+              "pieceVersion": "~0.2.5"
             },
-            "displayName": "Send Email"
+            "nextAction": {
+              "name": "step_3",
+              "type": "CODE",
+              "valid": true,
+              "settings": {
+                "input": {
+                  "chatgpt": "{{step_1}}"
+                },
+                "artifact": "UEsDBAoAAAAAAO4AJVcaCx9KUgAAAFIAAAAIAAAAaW5kZXgudHNleHBvcnQgY29uc3QgY29kZSA9IGFzeW5jIChpbnB1dHMpID0+IHsKICAgIHJldHVybiBKU09OLnBhcnNlKGlucHV0cy5jaGF0Z3B0KTsKfTsKUEsDBAoAAAAAAO4AJVcaUtEIHAAAABwAAAAMAAAAcGFja2FnZS5qc29uewogICJkZXBlbmRlbmNpZXMiOiB7CiAgfQp9ClBLAQIUAAoAAAAAAO4AJVcaCx9KUgAAAFIAAAAIAAAAAAAAAAAAAAAAAAAAAABpbmRleC50c1BLAQIUAAoAAAAAAO4AJVcaUtEIHAAAABwAAAAMAAAAAAAAAAAAAAAAAHgAAABwYWNrYWdlLmpzb25QSwUGAAAAAAIAAgBwAAAAvgAAAAAA",
+                "inputUiInfo": {}
+              },
+              "nextAction": {
+                "name": "step_2",
+                "type": "PIECE",
+                "valid": false,
+                "settings": {
+                  "input": {
+                    "to": [
+                      "{{trigger.data.email}}"
+                    ],
+                    "from": "no-reply@example.com",
+                    "content": "{{step_3.message}}",
+                    "subject": "{{step_3.subject}}",
+                    "from_name": "Our Business",
+                    "content_type": "text"
+                  },
+                  "pieceName": "@activepieces/piece-sendgrid",
+                  "pieceType": "OFFICIAL",
+                  "actionName": "send_email",
+                  "inputUiInfo": {},
+                  "packageType": "REGISTRY",
+                  "pieceVersion": "~0.2.3"
+                },
+                "displayName": "Send Email"
+              },
+              "displayName": "Code"
+            },
+            "displayName": "Ask ChatGPT"
           },
-          "displayName": "Code"
+          "displayName": "Member Subscribed to Audience"
         },
-        "displayName": "Ask ChatGPT"
-      }
-    },
-    "valid": false,
-    "connectionIds": [],
-    "schemaVersion": "1"
-  },
-  "blogUrl": ""
+        "displayName": "Send ChatGPT welcome email to MailChimp new subscribers"
+      },
+      "tags": ["Email", "Marketing"],
+      "pieces": [
+        "@activepieces/piece-mailchimp",
+        "@activepieces/piece-openai",
+        "@activepieces/piece-sendgrid"
+      ],
+      "blogUrl": "",
+      "metadata": null
+    }
+  ]
 }
